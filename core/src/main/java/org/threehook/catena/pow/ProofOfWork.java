@@ -70,4 +70,13 @@ public class ProofOfWork {
             this.nonce = nonce;
         }
     }
+
+    // Validates block's PoW
+    public boolean validate() {
+        byte[] data = prepareData(block.getNonce());
+        byte[] hash = HashUtils.checksum256(data);
+        BigInteger hashInt = new BigInteger(hash);
+        return hashInt.compareTo(target) == -1;
+    }
+
 }

@@ -11,6 +11,8 @@ import java.util.List;
 
 public class Block implements Serializable {
 
+    private static final long serialVersionUID = -2304315894161663652L;
+
     private long timestamp;
     private List<Transaction> transactions;
     private byte[] prevBlockHash;

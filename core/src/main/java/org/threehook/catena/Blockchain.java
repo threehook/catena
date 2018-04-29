@@ -132,7 +132,7 @@ public class Blockchain {
     }
 
     // Returns a BlockchainIterator
-    private BlockchainIterator iterator() {
+    public BlockchainIterator iterator() {
         return new BlockchainIterator(tip);
     }
 

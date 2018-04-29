@@ -61,7 +61,7 @@ public class TransactionFactory {
             txOutputs.add(new TransactionOutput(accumulated-amount, from));
         }
 
-        Transaction tx = new Transaction( null, (TransactionInput[]) txInputs.toArray(), (TransactionOutput[]) txOutputs.toArray());
+        Transaction tx = new Transaction( null, txInputs.stream().toArray(TransactionInput[]::new), txOutputs.stream().toArray(TransactionOutput[]::new));
         tx.setId(tx.hash());
 
         ECPrivateKey privateKey;

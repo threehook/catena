@@ -1,5 +1,6 @@
 package org.threehook.catena;
 
+import com.google.common.collect.Iterators;
 import org.threehook.catena.block.Block;
 import org.threehook.catena.leveldb.ChainstateDbSession;
 import org.threehook.catena.transaction.Transaction;
@@ -110,7 +111,7 @@ public class UTXOSet {
                             System.exit(1);
                         }
                     } else {
-                        chainstateDb.put(txInput.getTxId(), TransactionOutput.serializeOutputs((TransactionOutput[]) updatedTransactionOutputs.toArray()));
+                        chainstateDb.put(txInput.getTxId(), TransactionOutput.serializeOutputs(updatedTransactionOutputs.stream().toArray(TransactionOutput[]::new)));
                     }
                 }
 
@@ -118,7 +119,7 @@ public class UTXOSet {
                 for (TransactionOutput txOutPut : tx.getTransactionOutputs()) {
                     newTransactionOutputs.add(txOutPut);
                 }
-                chainstateDb.put(tx.getId(), TransactionOutput.serializeOutputs((TransactionOutput[])newTransactionOutputs.toArray()));
+                chainstateDb.put(tx.getId(), TransactionOutput.serializeOutputs(newTransactionOutputs.stream().toArray(TransactionOutput[]::new)));
             }
 
         }
@@ -139,7 +140,7 @@ public class UTXOSet {
         for (Map.Entry<String, List<TransactionOutput>> entry : utxos.entrySet()) {
             byte[] key = Hex.decode(entry.getKey());
             List<TransactionOutput> outs = entry.getValue();
-            TransactionOutput[] txOutputs = (TransactionOutput[]) outs.toArray();
+            TransactionOutput[] txOutputs = outs.stream().toArray(TransactionOutput[]::new);
             chainstateDb.put(key, TransactionOutput.serializeOutputs(txOutputs));
         }
 
@@ -149,6 +150,20 @@ public class UTXOSet {
             throw new BlockchainException(ioe.getMessage());
         }
 
+    }
+
+    // Returns the number of transactions in the UTXO set
+    public int countTransactions() {
+        DB chainstateDb = ChainstateDbSession.getLevelDbSession(System.getenv("NODE_ID")).getLevelDb();
+        DBIterator iterator = chainstateDb.iterator();
+        iterator.seekToFirst();
+        int count = Iterators.size(iterator);
+        try {
+            chainstateDb.close();
+        } catch (IOException ioe) {
+            throw new BlockchainException(ioe.getMessage());
+        }
+        return count;
     }
 
     public Blockchain getBlockchain() {

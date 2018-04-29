@@ -1,6 +1,8 @@
 package org.threehook.catena;
 
+import org.bouncycastle.util.encoders.Hex;
 import org.threehook.catena.block.Block;
+import org.threehook.catena.pow.ProofOfWork;
 import org.threehook.catena.transaction.Transaction;
 import org.threehook.catena.transaction.TransactionFactory;
 import org.threehook.catena.transaction.TransactionOutput;
@@ -118,11 +120,15 @@ public class Main {
         Option cwOption = Option.builder("cw").longOpt("createWallet").desc( "Generates a new key-pair and saves it into the wallet file.").build();
         Option laOption = Option.builder("la").longOpt("listAddresses").desc( "Lists all addresses from the wallet file.").build();
         Option gbOption = Option.builder("gb").longOpt("getBalance").desc( "Get balance of address.").numberOfArgs(1).argName("address").hasArgs().build();
+        Option pcOption = Option.builder("pc").longOpt("printChain").desc( "Print all the blocks of the blockchain.").build();
+        Option ruOption = Option.builder("ru").longOpt("reindexUtxo").desc( "Rebuilds the UTXO set.").build();
         Option sdOption = Option.builder("sd").longOpt("send").desc( "Send amount of coins from 'from' address to 'to' address. Optionally mine on the same node.").numberOfArgs(4).argName("from address> <to address> <amount> <mine").hasArgs().build();
         options.addOption(cbOption);
         options.addOption(cwOption);
         options.addOption(laOption);
         options.addOption(gbOption);
+        options.addOption(pcOption);
+        options.addOption(ruOption);
         options.addOption(sdOption);
         return options;
     }
@@ -221,6 +227,44 @@ public class Main {
                     }
                 }
                 System.out.printf("Balance of '%s': %d\n", address, balance);
+            }
+            else if (commandLine.hasOption("printChain")) {
+                if (commandLineArguments.length < 1) {
+                    Options pcOptions = new Options().addOption(options.getOption("pc"));
+                    printHelp(pcOptions, 120, null, null, 3, 5, false, System.out);
+                } else {
+                    System.out.println("NodeId is: " + System.getenv("NODE_ID"));
+                    Blockchain blockchain = BlockchainFactory.getBlockchain(System.getenv("NODE_ID"));
+                    BlockchainIterator bci = blockchain.iterator();
+                    while (bci.hasNext()) {
+                        Block block = bci.next();
+                        System.out.printf("============ Block %s ============\n", Hex.toHexString(block.getHash()));
+                        System.out.printf("Height: %d\n", block.getHeight());
+                        System.out.printf("Prev. block: %s\n", Hex.toHexString(block.getPrevBlockHash()));
+                        ProofOfWork pow = new ProofOfWork(block);
+                        System.out.printf("PoW: %s\n\n", pow.validate());
+                        for (Transaction tx : block.getTransactions()) {
+                            System.out.println(tx);
+                        }
+                        System.out.printf("\n\n");
+                        if (block.getPrevBlockHash().length == 0) {
+                            break;
+                        }
+                    }
+                    bci.close();
+                }
+            }
+            else if (commandLine.hasOption("reindexUtxo")) {
+                if (commandLineArguments.length < 1) {
+                    Options ruOptions = new Options().addOption(options.getOption("ru"));
+                    printHelp(ruOptions, 120, null, null, 3, 5, false, System.out);
+                } else {
+                    System.out.println("NodeId is: " + System.getenv("NODE_ID"));
+                    Blockchain blockchain = BlockchainFactory.getBlockchain(System.getenv("NODE_ID"));
+                    UTXOSet utxoSet = new UTXOSet(blockchain);
+                    utxoSet.reindex();
+                    System.out.printf("Done! There are %d transactions in the UTXO set.\n", utxoSet.countTransactions());
+                }
             }
             else if (commandLine.hasOption("send")) {
                 String address = null;

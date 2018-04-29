@@ -13,6 +13,7 @@ import java.security.Signature;
 import java.security.interfaces.ECPrivateKey;
 import java.security.spec.ECGenParameterSpec;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -90,7 +91,7 @@ public class Transaction implements Serializable {
         for (TransactionOutput txOutput : transactionOutputs) {
             txOutputs.add(new TransactionOutput(txOutput.getValue(), txOutput.getPubKeyHash()));
         }
-        return new Transaction(id, (TransactionInput[]) txInputs.toArray(), (TransactionOutput[]) txOutputs.toArray());
+        return new Transaction(id, txInputs.stream().toArray(TransactionInput[]::new), txOutputs.stream().toArray(TransactionOutput[]::new));
     }
 
     // Verifies signatures of Transaction inputs
@@ -142,4 +143,23 @@ public class Transaction implements Serializable {
         return transactionOutputs;
     }
 
+    // Returns a human-readable representation of a transaction
+    @Override
+    public String toString() {
+        StringBuffer buffer = new StringBuffer();
+        buffer.append(String.format("--- Transaction %s:\n", Hex.toHexString(id)));
+        for (int i=0; i< transactionInputs.length; i++) {
+            buffer.append(String.format("     Input %d:\n", i));
+            buffer.append(String.format("       TXID:      %s\n", Hex.toHexString(transactionInputs[i].getTxId())));
+            buffer.append(String.format("       Out:       %d\n", transactionInputs[i].getvOut()));
+            buffer.append(String.format("       Signature: %s\n", Hex.toHexString(transactionInputs[i].getSignature())));
+            buffer.append(String.format("       PubKey:    %s\n", Hex.toHexString(transactionInputs[i].getPubKey())));
+        }
+        for (int i=0; i<transactionOutputs.length; i++) {
+            buffer.append(String.format("     Output %d:\n", i));
+            buffer.append(String.format("       Value:  %d\n", transactionOutputs[i].getValue()));
+            buffer.append(String.format("       Script: %s\n", Hex.toHexString(transactionOutputs[i].getPubKeyHash())));
+        }
+        return buffer.toString();
+    }
 }
