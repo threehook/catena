@@ -22,14 +22,28 @@ public class BlocksDbSession {
 
     private DB db;
 
-    @PostConstruct
-    public void init(){
-        createLevelDb();
-    }
-
     public DB getLevelDb() {
+        try {
+            if (db == null) {
+                Options options = new Options();
+                options.createIfMissing(true);
+                db = factory.open(new File(dbBlocksPath), options);
+            }
+        } catch (IOException ioe) {
+            throw new BlockchainException(ioe.getMessage());
+        }
         return db;
     }
+
+//    public void close() {
+//        try {
+//            if (db != null) {
+//                db.close();
+//            }
+//        } catch (IOException ioe) {
+//            throw new BlockchainException(ioe.getMessage());
+//        }
+//    }
 
     public boolean dbExists() {
         File dbFile = new File(dbBlocksPath);
@@ -39,15 +53,6 @@ public class BlocksDbSession {
         return true;
     }
 
-    private void createLevelDb() {
-        Options options = new Options();
-        options.createIfMissing(true);
-        try {
-            db = factory.open(new File(dbBlocksPath), options);
-        } catch (IOException ioe) {
-            throw new BlockchainException(ioe.getMessage());
-        }
-    }
 }
 
 

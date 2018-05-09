@@ -2,12 +2,17 @@ package org.threehook.catena.networking.config;
 
 import io.scalecube.cluster.Member;
 import io.scalecube.transport.Address;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.threehook.catena.core.BlockchainException;
 import org.threehook.catena.networking.cluster.ClusterNetwork;
 import org.threehook.catena.networking.cluster.ClusterNode;
+import org.threehook.catena.networking.messaging.MessageHandlerRegister;
+import org.threehook.catena.networking.messaging.MessageType;
+import org.threehook.catena.networking.messaging.handlers.GetBlocksMessageHandler;
+import org.threehook.catena.networking.messaging.handlers.VersionMessageHandler;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -17,30 +22,28 @@ import java.util.Map;
 @Configuration
 public class NetworkingConfig {
 
-    private final static String SEPARATOR = ":";
-
     @Value("${node.server.address}")
     private String nodeServerAddress;
     @Value("${node.server.port}")
     private int nodeServerPort;
     @Value("${node.id}")
     private String nodeId;
-    @Value("#{'${known.node.addresses}'.split(',')}")
-    private List<String> seedAddresses;
+    @Autowired
+    private SeedProperties seedProperties;
 
     private Map<String, Member> membersByHost = new HashMap<>();
+
 
     @Bean
     public ClusterNetwork clusterNetwork() {
         List<ClusterNode> clusterNodes = new ArrayList<>();
-        if (!checkSeedAddresses(seedAddresses)) {
-            throw new BlockchainException("Property 'known.node.addresses' in application.properties is invalid or empty.");
+        if (!checkSeedAddresses(seedProperties.getSeedAddresses())) {
+            throw new BlockchainException("Property 'seed.seed-addresses' in application.properties is invalid or empty.");
         }
-        for (String knownNodeAddress : seedAddresses) {
-            String[] data = knownNodeAddress.split(SEPARATOR);
-            ClusterNode clusterNode = new ClusterNode(data[0], data[1], Integer.valueOf(data[2]));
+        for (SeedAddress seedAddress : seedProperties.getSeedAddresses()) {
+            ClusterNode clusterNode = new ClusterNode(seedAddress.getName(), seedAddress.getHost(), seedAddress.getPort());
             clusterNodes.add(clusterNode);
-            membersByHost.put(data[1], new Member(clusterNode.getName(), Address.create(clusterNode.getHost(), clusterNode.getPort())));
+            membersByHost.put(seedAddress.getHost(), new Member(seedAddress.getName(), Address.create(seedAddress.getHost(), seedAddress.getPort())));
         }
         return new ClusterNetwork.Builder().setNodeId(nodeId).setListenerAddress(nodeServerAddress).setLocalPort(nodeServerPort)
                 .setClusterNodes(clusterNodes).build();
@@ -51,25 +54,39 @@ public class NetworkingConfig {
         return membersByHost;
     }
 
+//    @Bean
+//    public List<String> seedProperties() {
+//        return seedProperties;
+//    }
+
     @Bean
-    public List<String> seedAddresses() {
-        return seedAddresses;
+    public List<SeedAddress> seedAddresses() {
+        return seedProperties.getSeedAddresses();
     }
 
-    protected boolean checkSeedAddresses(List<String> seedAddresses) {
-        if (seedAddresses.isEmpty()) {
+    @Bean
+    public VersionMessageHandler versionMessageHandler() {
+        return new VersionMessageHandler();
+    }
+
+    @Bean
+    public GetBlocksMessageHandler getBlocksMessageHandler() {
+        return new GetBlocksMessageHandler();
+    }
+
+    @Bean
+    public MessageHandlerRegister device() {
+        MessageHandlerRegister device = new MessageHandlerRegister();
+        device.registerHandler(MessageType.VERSION.class, versionMessageHandler());
+        device.registerHandler(MessageType.GET_BLOCKS.class, getBlocksMessageHandler());
+
+        return device;
+    }
+
+    protected boolean checkSeedAddresses(List<SeedAddress> seedProperties) {
+        if (seedProperties.isEmpty()) {
             return false;
         }
-        return seedAddresses.stream().allMatch(item -> {
-            String[] data = item.split(SEPARATOR);
-            if (data.length != 3) return false;
-            try {
-                Integer.getInteger(data[2]);
-            } catch (NumberFormatException nfe) {
-                return false;
-            }
-            return true;
-        });
+        return true;
     }
-
 }

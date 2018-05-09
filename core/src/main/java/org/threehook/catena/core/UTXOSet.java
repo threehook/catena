@@ -56,11 +56,11 @@ public class UTXOSet {
             }
             iterator.next();
         }
-        try {
-            chainstateDb.close();
-        } catch (IOException ioe) {
-            throw new BlockchainException(ioe.getMessage());
-        }
+//        try {
+//            chainstateDb.close();
+//        } catch (IOException ioe) {
+//            throw new BlockchainException(ioe.getMessage());
+//        }
         return accumulated;
     }
 
@@ -83,11 +83,11 @@ public class UTXOSet {
             }
             iterator.next();
         }
-        try {
-            chainstateDb.close();
-        } catch (IOException ioe) {
-            throw new BlockchainException(ioe.getMessage());
-        }
+//        try {
+//            chainstateDb.close();
+//        } catch (IOException ioe) {
+//            throw new BlockchainException(ioe.getMessage());
+//        }
         return utxos;
     }
 
@@ -129,11 +129,11 @@ public class UTXOSet {
             }
 
         }
-        try {
-            chainstateDb.close();
-        } catch (IOException ioe) {
-            throw new BlockchainException(ioe.getMessage());
-        }
+//        try {
+//            chainstateDb.close();
+//        } catch (IOException ioe) {
+//            throw new BlockchainException(ioe.getMessage());
+//        }
     }
 
     // Rebuilds the UTXO set
@@ -151,11 +151,11 @@ public class UTXOSet {
             chainstateDb.put(key, TransactionOutput.serializeOutputs(txOutputs));
         }
 
-        try {
-            chainstateDb.close();
-        } catch (IOException ioe) {
-            throw new BlockchainException(ioe.getMessage());
-        }
+//        try {
+//            chainstateDb.close();
+//        } catch (IOException ioe) {
+//            throw new BlockchainException(ioe.getMessage());
+//        }
 
     }
 
@@ -166,11 +166,11 @@ public class UTXOSet {
         DBIterator iterator = chainstateDb.iterator();
         iterator.seekToFirst();
         int count = Iterators.size(iterator);
-        try {
-            chainstateDb.close();
-        } catch (IOException ioe) {
-            throw new BlockchainException(ioe.getMessage());
-        }
+//        try {
+//            chainstateDb.close();
+//        } catch (IOException ioe) {
+//            throw new BlockchainException(ioe.getMessage());
+//        }
         return count;
     }
 

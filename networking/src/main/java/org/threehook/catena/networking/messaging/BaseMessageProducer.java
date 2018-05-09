@@ -21,9 +21,12 @@ public abstract class BaseMessageProducer<T extends Message> implements MessageP
 
     protected abstract void sendMessage(String address, Message message);
 
-
     public T produceMessage(String targetAddress) {
         return createMessage(targetAddress);
+    }
+
+    public void produceAndSendMessage(String targetAddress) {
+        createAndSendMessage(targetAddress);
     }
 
     protected Blockchain getBlockchain() {

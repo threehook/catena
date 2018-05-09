@@ -1,9 +1,8 @@
 package org.threehook.catena.networking.messages;
 
-import org.threehook.catena.networking.messaging.MessageHandler;
-import org.threehook.catena.networking.messaging.handlers.GetBlocksMessageHandler;
+import org.threehook.catena.networking.messaging.MessageType;
 
-public class GetBlocks extends Message {
+public class GetBlocks implements Message<MessageType.GET_BLOCKS> {
 
     private String addrFrom;
 
@@ -16,7 +15,7 @@ public class GetBlocks extends Message {
     }
 
     @Override
-    public MessageHandler getMessageHandler() {
-        return new GetBlocksMessageHandler();
+    public Class<MessageType.GET_BLOCKS> getTypeClass() {
+        return MessageType.GET_BLOCKS.class;
     }
 }

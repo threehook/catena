@@ -11,12 +11,6 @@
     <artifactId>api</artifactId>
 
     <dependencies>
-        <!-- is deze echt nodig -->
-        <!--<dependency>-->
-            <!--<groupId>org.threehook.catena</groupId>-->
-            <!--<artifactId>core</artifactId>-->
-            <!--<version>${project.version}</version>-->
-        <!--</dependency>-->
         <dependency>
             <groupId>org.threehook.catena</groupId>
             <artifactId>networking</artifactId>

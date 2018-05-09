@@ -1,28 +1,29 @@
 package org.threehook.catena.core;
 
+import org.apache.commons.lang3.SerializationUtils;
+import org.bouncycastle.util.encoders.Hex;
+import org.iq80.leveldb.DB;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import org.threehook.catena.core.block.Block;
 import org.threehook.catena.core.leveldb.BlocksDbSession;
 import org.threehook.catena.core.transaction.Transaction;
 import org.threehook.catena.core.transaction.TransactionInput;
 import org.threehook.catena.core.transaction.TransactionOutput;
 import org.threehook.catena.core.util.ByteUtils;
-import org.apache.commons.lang3.SerializationUtils;
-import org.bouncycastle.util.encoders.Hex;
-import org.iq80.leveldb.DB;
 
-import java.io.IOException;
 import java.security.interfaces.ECPrivateKey;
 import java.util.*;
 
+@Component
 public class Blockchain {
 
     @Autowired
     private BlocksDbSession blocksDbSession;
 
-    byte[] tip;
+    private byte[] tip;
 
-    public Blockchain(byte[] tip) {
+    public void setTip(byte[] tip) {
         this.tip = tip;
     }
 
@@ -45,8 +46,7 @@ public class Blockchain {
             }
         }
         DB blocksDb = blocksDbSession.getLevelDb();
-        byte[] lastHash;
-        lastHash = blocksDb.get(ByteUtils.stringToBytes("l"));
+        byte[] lastHash = blocksDb.get(tip);
         byte[] blockData = blocksDb.get(lastHash);
         Block block = SerializationUtils.deserialize(blockData);
         int lastHeight = block.getHeight();
@@ -54,40 +54,7 @@ public class Blockchain {
         blocksDb.put(newBlock.getHash(), newBlock.serialize());
         blocksDb.put(ByteUtils.stringToBytes("l"), newBlock.getHash());
 
-        try {
-            blocksDb.close();
-        } catch (IOException ioe) {
-            throw new BlockchainException(ioe.getMessage());
-        }
-
         return newBlock;
-    }
-
-    // Finds a transaction by its ID
-    private Transaction findTransaction(byte[] id) {
-
-        BlockchainIterator bci = iterator();
-        while (bci.hasNext()) {
-            Block block = bci.next();
-            for (Transaction tx : block.getTransactions()) {
-                if (Arrays.equals(tx.getId(), id)) {
-                    bci.close();
-                    return tx;
-                }
-            }
-        }
-        bci.close();
-        return null;
-    }
-
-    private boolean verifyTransaction(Transaction tx) {
-        if (tx.isCoinBase()) return true;
-        Map<String, Transaction> prevTxMap = new HashMap<>();
-        for (TransactionInput txInput : tx.getTransactionInputs()) {
-            Transaction prevTx = findTransaction(txInput.getTxId());
-            prevTxMap.put(Hex.toHexString(prevTx.getId()), prevTx);
-        }
-        return tx.verify(prevTxMap);
     }
 
     // Finds all unspent transaction outputs and returns transactions with spent outputs removed
@@ -136,21 +103,40 @@ public class Blockchain {
     // Returns the height of the latest block
     public int getBestHeight() {
         DB blocksDb = blocksDbSession.getLevelDb();
-        byte[] lastHash = blocksDb.get(ByteUtils.stringToBytes("l"));
-        byte[] blockData = blocksDb.get(lastHash);
-        Block lastBlock = (Block) SerializationUtils.deserialize(blockData);
+        byte[] blockData = blocksDb.get(tip);
+        Block lastBlock = SerializationUtils.deserialize(blockData);
 
-        try {
-            blocksDb.close();
-        } catch (IOException ioe) {
-            throw new BlockchainException(ioe.getMessage());
-        }
         return lastBlock.getHeight();
     }
 
     // Returns a BlockchainIterator
     public BlockchainIterator iterator() {
-        return new BlockchainIterator(tip);
+        return new BlockchainIterator(tip, blocksDbSession.getLevelDb());
+    }
+
+    // Finds a transaction by its ID
+    private Transaction findTransaction(byte[] id) {
+
+        BlockchainIterator bci = iterator();
+        while (bci.hasNext()) {
+            Block block = bci.next();
+            for (Transaction tx : block.getTransactions()) {
+                if (Arrays.equals(tx.getId(), id)) {
+                    return tx;
+                }
+            }
+        }
+        return null;
+    }
+
+    private boolean verifyTransaction(Transaction tx) {
+        if (tx.isCoinBase()) return true;
+        Map<String, Transaction> prevTxMap = new HashMap<>();
+        for (TransactionInput txInput : tx.getTransactionInputs()) {
+            Transaction prevTx = findTransaction(txInput.getTxId());
+            prevTxMap.put(Hex.toHexString(prevTx.getId()), prevTx);
+        }
+        return tx.verify(prevTxMap);
     }
 
 }

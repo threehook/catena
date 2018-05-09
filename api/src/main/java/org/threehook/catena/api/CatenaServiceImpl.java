@@ -94,7 +94,6 @@ public class CatenaServiceImpl implements CatenaApi {
                 break;
             }
         }
-        bci.close();
     }
 
     @Override

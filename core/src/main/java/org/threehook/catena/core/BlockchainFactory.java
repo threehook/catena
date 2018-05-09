@@ -10,7 +10,6 @@ import org.threehook.catena.core.transaction.Transaction;
 import org.threehook.catena.core.transaction.TransactionFactory;
 import org.threehook.catena.core.util.ByteUtils;
 
-import java.io.IOException;
 import java.util.Collections;
 
 @Component
@@ -20,6 +19,8 @@ public class BlockchainFactory {
 
     @Autowired
     private BlocksDbSession blocksDbSession;
+    @Autowired
+    private Blockchain blockchain;
 
     // Creates a new blockchain DB
     public Blockchain createBlockchain(String address) {
@@ -32,19 +33,13 @@ public class BlockchainFactory {
 
         Block genesis = new Block(Collections.singletonList(cbtx), new byte[]{}, 0);
         DB db =  blocksDbSession.getLevelDb();
-        Blockchain blockchain = new Blockchain(genesis.getHash());
         db.put(genesis.getHash(), genesis.serialize());
         db.put(ByteUtils.stringToBytes("l"), genesis.getHash());
 
         System.out.println("Genesis hash: " + Hex.toHexString(genesis.getHash()));
         System.out.println("Genesis nonce: " + genesis.getNonce());
 
-        try {
-            db.close();
-        } catch (IOException ioe) {
-            throw new BlockchainException(ioe.getMessage());
-        }
-
+        blockchain.setTip(genesis.getHash());
         return blockchain;
     }
 
@@ -55,14 +50,7 @@ public class BlockchainFactory {
             System.exit(1);
         }
         DB db = blocksDbSession.getLevelDb();
-        Blockchain blockchain = new Blockchain(db.get(ByteUtils.stringToBytes("l")));
-
-        try {
-            db.close();
-        } catch (IOException ioe) {
-            throw new BlockchainException(ioe.getMessage());
-        }
-
+        blockchain.setTip(db.get(ByteUtils.stringToBytes("l")));;
         return blockchain;
     }
 

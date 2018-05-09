@@ -1,9 +1,8 @@
 package org.threehook.catena.networking.messages;
 
-import org.threehook.catena.networking.messaging.MessageHandler;
-import org.threehook.catena.networking.messaging.handlers.VersionMessageHandler;
+import org.threehook.catena.networking.messaging.MessageType;
 
-public class Version extends Message {
+public class Version implements Message<MessageType.VERSION> {
 
     private int version;
     private int bestHeight;
@@ -28,7 +27,8 @@ public class Version extends Message {
     }
 
     @Override
-    public MessageHandler getMessageHandler() {
-        return new VersionMessageHandler();
+    public Class<MessageType.VERSION> getTypeClass() {
+        return MessageType.VERSION.class;
     }
+
 }

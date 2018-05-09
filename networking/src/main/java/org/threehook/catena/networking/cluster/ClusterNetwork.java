@@ -50,11 +50,10 @@ public class ClusterNetwork {
         }
 
         public ClusterNetwork build() {
-            Cluster cluster = null;
             TransportConfig transportConfig = TransportConfig.builder().listenAddress(listenerAddress).port(localPort).build();
             Map<String, String> metadata = ImmutableMap.of(NAME, nodeId);
             ClusterConfig config = ClusterConfig.builder().transportConfig(transportConfig).metadata(metadata).build();
-            cluster = Cluster.joinAwait(config);
+            Cluster cluster = Cluster.joinAwait(config);
 
             // Join known hosts to cluster network
             for (ClusterNode clusterNode : clusterNodes) {

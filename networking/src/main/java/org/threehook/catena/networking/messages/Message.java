@@ -1,10 +1,8 @@
 package org.threehook.catena.networking.messages;
 
-import org.threehook.catena.networking.messaging.MessageHandler;
+import org.threehook.catena.networking.messaging.MessageType;
 
-import java.io.Serializable;
+public interface Message<T extends MessageType> {
 
-public abstract class Message implements Serializable {
-
-    public abstract MessageHandler getMessageHandler();
+    Class<T> getTypeClass();
 }

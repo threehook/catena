@@ -2,8 +2,6 @@ package org.threehook.catena.core.leveldb;
 
 import org.iq80.leveldb.DB;
 import org.iq80.leveldb.Options;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.threehook.catena.core.BlockchainException;

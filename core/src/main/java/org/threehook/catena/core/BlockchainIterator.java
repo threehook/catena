@@ -1,50 +1,36 @@
 package org.threehook.catena.core;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.threehook.catena.core.block.Block;
-import org.threehook.catena.core.leveldb.BlocksDbSession;
 import org.apache.commons.lang3.SerializationUtils;
 import org.iq80.leveldb.DB;
+import org.threehook.catena.core.block.Block;
 
-import java.io.Closeable;
-import java.io.IOException;
 import java.util.Iterator;
 
-public class BlockchainIterator implements Iterator<Block>, Closeable {
-
-    @Autowired
-    private BlocksDbSession blocksDbSession;
+public class BlockchainIterator implements Iterator<Block> {
 
     private DB db;
-    private byte[] currentHash;
+    private byte[] tip;
 
 
-    public BlockchainIterator(byte[] currentHash) {
-        db = blocksDbSession.getLevelDb();
-        this.currentHash = currentHash;
+    public BlockchainIterator(byte[] tip, DB db) {
+        this.db = db;
+        this.tip = tip;
     }
 
     @Override
     public boolean hasNext() {
-        return currentHash.length > 0;
+        return tip.length > 0;
     }
 
     @Override
     // Next returns next block starting from the tip
     public Block next() {
 
-        byte[] encodedBlock = db.get(currentHash);
+        byte[] encodedBlock = db.get(tip);
         Block block = SerializationUtils.deserialize(encodedBlock);
-        currentHash = block.getPrevBlockHash();
+        tip = block.getPrevBlockHash();
 
         return block;
     }
 
-    public void close() {
-        try {
-            db.close();
-        } catch (IOException ioe) {
-            throw new BlockchainException(ioe.getMessage());
-        }
-    }
 }
