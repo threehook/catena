@@ -6,10 +6,9 @@ import org.threehook.catena.core.Blockchain;
 import org.threehook.catena.core.BlockchainFactory;
 import org.threehook.catena.networking.messages.Version;
 import org.threehook.catena.networking.messaging.BaseMessageHandler;
-import org.threehook.catena.networking.messaging.MessageHandler;
 import org.threehook.catena.networking.messaging.MessageType;
-import org.threehook.catena.networking.messaging.producers.GetBlocksMessageProducer;
-import org.threehook.catena.networking.messaging.producers.VersionMessageProducer;
+import org.threehook.catena.networking.messaging.dispatchers.GetBlocksMessageProducer;
+import org.threehook.catena.networking.messaging.dispatchers.VersionMessageProducer;
 
 import java.util.List;
 
@@ -32,12 +31,12 @@ public class VersionMessageHandler extends BaseMessageHandler<MessageType.VERSIO
         int myBestHeight = blockchain.getBestHeight();
         int foreignerBestHeight = message.getBestHeight();
         if (myBestHeight < foreignerBestHeight) {
-            getBlocksMessageProducer.createAndSendMessage(message.getAddrFrom());
+            getBlocksMessageProducer.produceAndSendMessage(message.getAddressFrom());
         } else if (myBestHeight > foreignerBestHeight) {
-            versionMessageProducer.createAndSendMessage(message.getAddrFrom());
+            versionMessageProducer.produceAndSendMessage(message.getAddressFrom());
         }
-        if (!isSeedAddress(message.getAddrFrom())) {
-            seedAddresses.add(message.getAddrFrom());
+        if (!isSeedAddress(message.getAddressFrom())) {
+            seedAddresses.add(message.getAddressFrom());
         }
     }
 

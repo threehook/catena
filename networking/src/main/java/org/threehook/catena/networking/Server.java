@@ -8,7 +8,7 @@ import org.threehook.catena.networking.config.SeedAddress;
 import org.threehook.catena.networking.messages.Message;
 import org.threehook.catena.networking.messaging.MessageHandlerRegister;
 import org.threehook.catena.networking.messaging.MessageHandler;
-import org.threehook.catena.networking.messaging.producers.VersionMessageProducer;
+import org.threehook.catena.networking.messaging.dispatchers.VersionMessageProducer;
 import org.threehook.catena.networking.serverthread.ServerThread;
 import org.threehook.catena.networking.serverthread.ShutdownThread;
 
@@ -40,7 +40,9 @@ public class Server {
         this.miningAddress = minerAddress; //???
 
         // TODO: How to select a seedAddress from many?
-        versionMessageProducer.produceAndSendMessage(seedAddresses.get(0).getHost());
+        SeedAddress seedAddress = seedAddresses.get(0);
+        String targetAddress = seedAddress.getHost() + ":" + seedAddress.getPort();
+        versionMessageProducer.produceAndSendMessage(targetAddress);
 
         // Listen for messages
         final ExecutorService executorService = Executors.newCachedThreadPool();
@@ -60,6 +62,5 @@ public class Server {
         Runtime.getRuntime().addShutdownHook(new ShutdownThread(executorService, serverThread));
         System.out.println("Catena server started on " + nodeServerAddress + ":" + nodeServerPort + ".\nPress Ctrl-C to stop. Running threads will be cleanly finished.\n");
     }
-
 
 }

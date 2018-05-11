@@ -6,12 +6,12 @@ public class Version implements Message<MessageType.VERSION> {
 
     private int version;
     private int bestHeight;
-    private String addrFrom;
+    private String addressFrom; // TODO: In metadata?
 
     public Version(int version, int bestHeight, String addrFrom) {
         this.version = version;
         this.bestHeight = bestHeight;
-        this.addrFrom = addrFrom;
+        this.addressFrom = addrFrom;
     }
 
     public int getVersion() {
@@ -22,8 +22,8 @@ public class Version implements Message<MessageType.VERSION> {
         return bestHeight;
     }
 
-    public String getAddrFrom() {
-        return addrFrom;
+    public String getAddressFrom() {
+        return addressFrom;
     }
 
     @Override

@@ -43,7 +43,8 @@ public class NetworkingConfig {
         for (SeedAddress seedAddress : seedProperties.getSeedAddresses()) {
             ClusterNode clusterNode = new ClusterNode(seedAddress.getName(), seedAddress.getHost(), seedAddress.getPort());
             clusterNodes.add(clusterNode);
-            membersByHost.put(seedAddress.getHost(), new Member(seedAddress.getName(), Address.create(seedAddress.getHost(), seedAddress.getPort())));
+            String key = seedAddress.getHost() + ":" + seedAddress.getPort();
+            membersByHost.put(key, new Member(seedAddress.getName(), Address.create(seedAddress.getHost(), seedAddress.getPort())));
         }
         return new ClusterNetwork.Builder().setNodeId(nodeId).setListenerAddress(nodeServerAddress).setLocalPort(nodeServerPort)
                 .setClusterNodes(clusterNodes).build();

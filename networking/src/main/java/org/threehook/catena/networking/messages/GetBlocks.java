@@ -4,14 +4,14 @@ import org.threehook.catena.networking.messaging.MessageType;
 
 public class GetBlocks implements Message<MessageType.GET_BLOCKS> {
 
-    private String addrFrom;
+    private String addressFrom;
 
     public GetBlocks(String addrFrom) {
-        this.addrFrom = addrFrom;
+        this.addressFrom = addrFrom;
     }
 
-    public String getAddrFrom() {
-        return addrFrom;
+    public String getAddressFrom() {
+        return addressFrom;
     }
 
     @Override

@@ -36,7 +36,7 @@ public class Block implements Serializable {
 
     // Returns a hash of the transactions in the block
     public byte[] hashTransactions() {
-       List<byte[]> transactions = new ArrayList<>();
+       List<byte[]> transactions = new ArrayList<>();  // TODO: Better use byte[][] and Bytes.concat ??
         for (Transaction tx : this.transactions) {
             transactions.add(tx.serialize());
         }

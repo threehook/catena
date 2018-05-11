@@ -1,5 +1,6 @@
 package org.threehook.catena.core;
 
+import com.google.common.primitives.Bytes;
 import org.apache.commons.lang3.SerializationUtils;
 import org.bouncycastle.util.encoders.Hex;
 import org.iq80.leveldb.DB;
@@ -35,6 +36,17 @@ public class Blockchain {
             prevTXs.put(Hex.toHexString(prevTx.getId()), prevTx);
         }
         tx.sign(privateKey, prevTXs);
+    }
+
+    // Returns a list of hashes of all the blocks in the chain
+    public List<byte[]> getBlockHashes() {
+        List<byte[]> blocks = new ArrayList<>();
+        BlockchainIterator bci = iterator();
+        while (bci.hasNext()) {
+            Block block = bci.next();
+            blocks.add(block.getHash());
+        }
+        return blocks;
     }
 
     // Mines a new block with the provided transactions
