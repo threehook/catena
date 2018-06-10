@@ -19,13 +19,12 @@ public class BlockchainIterator implements Iterator<Block> {
 
     @Override
     public boolean hasNext() {
-        return tip.length > 0;
+        return tip.length > 0 ;
     }
 
     @Override
     // Next returns next block starting from the tip
     public Block next() {
-
         byte[] encodedBlock = db.get(tip);
         Block block = SerializationUtils.deserialize(encodedBlock);
         tip = block.getPrevBlockHash();

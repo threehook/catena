@@ -58,11 +58,10 @@ public class Blockchain {
             }
         }
         DB blocksDb = blocksDbSession.getLevelDb();
-        byte[] lastHash = blocksDb.get(tip);
-        byte[] blockData = blocksDb.get(lastHash);
+        byte[] blockData = blocksDb.get(tip);
         Block block = SerializationUtils.deserialize(blockData);
         int lastHeight = block.getHeight();
-        Block newBlock = new Block(Arrays.asList(transactions), lastHash, lastHeight+1);
+        Block newBlock = new Block(Arrays.asList(transactions), tip, lastHeight+1);
         blocksDb.put(newBlock.getHash(), newBlock.serialize());
         blocksDb.put(ByteUtils.stringToBytes("l"), newBlock.getHash());
 

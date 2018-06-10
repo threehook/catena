@@ -6,6 +6,7 @@ import org.iq80.leveldb.DB;
 import org.iq80.leveldb.DBException;
 import org.iq80.leveldb.DBIterator;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import org.threehook.catena.core.block.Block;
 import org.threehook.catena.core.leveldb.ChainstateDbSession;
 import org.threehook.catena.core.transaction.Transaction;
@@ -18,21 +19,19 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+@Component
 public class UTXOSet {
 
     @Autowired
     private ChainstateDbSession chainstateDbSession;
-
-    Blockchain blockchain;
-
-    public UTXOSet(Blockchain blockchain) {
-        this.blockchain = blockchain;
-    }
+    @Autowired
+    private BlockchainFactory blockchainFactory;
+//    @Autowired
+//    private Blockchain blockchain;
 
     // Finds and returns unspent outputs to reference in inputs
     public int findSpendableOutputs(byte[] pubKeyHash, int amount, Map<String, Integer[]> unspentOutputs) {
         int accumulated = 0;
-//        DB chainstateDb = ChainstateDbSession.getLevelDbSession(System.getenv("NODE_ID")).getLevelDb();
         DB chainstateDb = chainstateDbSession.getLevelDb();
         DBIterator iterator = chainstateDb.iterator();
         iterator.seekToFirst();
@@ -56,11 +55,6 @@ public class UTXOSet {
             }
             iterator.next();
         }
-//        try {
-//            chainstateDb.close();
-//        } catch (IOException ioe) {
-//            throw new BlockchainException(ioe.getMessage());
-//        }
         return accumulated;
     }
 
@@ -68,7 +62,6 @@ public class UTXOSet {
     // FindUTXO finds UTXO for a public key hash
     public List<TransactionOutput> findUTXO(byte[] pubKeyHash) {
         List<TransactionOutput> utxos = new ArrayList<>();
-//        DB chainstateDb = ChainstateDbSession.getLevelDbSession(System.getenv("NODE_ID")).getLevelDb();
         DB chainstateDb = chainstateDbSession.getLevelDb();
         DBIterator iterator = chainstateDb.iterator();
         iterator.seekToFirst();
@@ -83,11 +76,6 @@ public class UTXOSet {
             }
             iterator.next();
         }
-//        try {
-//            chainstateDb.close();
-//        } catch (IOException ioe) {
-//            throw new BlockchainException(ioe.getMessage());
-//        }
         return utxos;
     }
 
@@ -95,7 +83,6 @@ public class UTXOSet {
     // The Block is considered to be the tip of a blockchain
     public void update(Block block) {
         //TODO: What about transactional integrity if one of two chainstateDb updates fails?
-//        DB chainstateDb = ChainstateDbSession.getLevelDbSession(System.getenv("NODE_ID")).getLevelDb();
         DB chainstateDb = chainstateDbSession.getLevelDb();
         for (Transaction tx : block.getTransactions()) {
             if (!tx.isCoinBase()) {
@@ -129,20 +116,15 @@ public class UTXOSet {
             }
 
         }
-//        try {
-//            chainstateDb.close();
-//        } catch (IOException ioe) {
-//            throw new BlockchainException(ioe.getMessage());
-//        }
     }
 
     // Rebuilds the UTXO set
     public void reindex() {
-//        DB chainstateDb = ChainstateDbSession.getLevelDbSession(System.getenv("NODE_ID")).getLevelDb();
         DB chainstateDb = chainstateDbSession.getLevelDb();
         //Delete the database
 //        ChainstateDbSession.delete();
 
+        Blockchain blockchain = blockchainFactory.getBlockchain();
         Map<String, List<TransactionOutput>> utxos = blockchain.findUTXO();
         for (Map.Entry<String, List<TransactionOutput>> entry : utxos.entrySet()) {
             byte[] key = Hex.decode(entry.getKey());
@@ -150,34 +132,19 @@ public class UTXOSet {
             TransactionOutput[] txOutputs = outs.stream().toArray(TransactionOutput[]::new);
             chainstateDb.put(key, TransactionOutput.serializeOutputs(txOutputs));
         }
-
-//        try {
-//            chainstateDb.close();
-//        } catch (IOException ioe) {
-//            throw new BlockchainException(ioe.getMessage());
-//        }
-
     }
 
     // Returns the number of transactions in the UTXO set
     public int countTransactions() {
-//        DB chainstateDb = ChainstateDbSession.getLevelDbSession(System.getenv("NODE_ID")).getLevelDb();
         DB chainstateDb = chainstateDbSession.getLevelDb();
         DBIterator iterator = chainstateDb.iterator();
         iterator.seekToFirst();
         int count = Iterators.size(iterator);
-//        try {
-//            chainstateDb.close();
-//        } catch (IOException ioe) {
-//            throw new BlockchainException(ioe.getMessage());
-//        }
         return count;
     }
 
     public Blockchain getBlockchain() {
-        return blockchain;
+        return blockchainFactory.getBlockchain();
     }
-
-
 
 }

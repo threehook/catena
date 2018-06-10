@@ -9,9 +9,9 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ComponentScan;
-import org.springframework.util.ClassUtils;
 import org.threehook.catena.api.CatenaApi;
 import org.threehook.catena.core.util.ByteUtils;
+import uk.org.lidalia.sysoutslf4j.context.SysOutOverSLF4J;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -19,6 +19,7 @@ import java.io.PrintWriter;
 import java.security.Security;
 
 @SpringBootApplication
+//@EnableLoadTimeWeaving(aspectjWeaving = EnableLoadTimeWeaving.AspectJWeaving.ENABLED)
 @ComponentScan("org.threehook.catena")
 public class Cli implements ApplicationRunner {
 
@@ -36,12 +37,13 @@ public class Cli implements ApplicationRunner {
      * @param args Commmand-line arguments.
      */
     public static void main(String[] args) {
-        SpringApplication cli = new SpringApplication(Cli.class);
+        final SpringApplication cli = new SpringApplication(Cli.class);
         cli.run(args);
     }
 
     @Override
     public void run(ApplicationArguments applicationArguments) throws Exception {
+        SysOutOverSLF4J.sendSystemOutAndErrToSLF4J();
         Security.addProvider(new BouncyCastleProvider());
         displayHeader(System.out);
         displayBlankLines(2, System.out);

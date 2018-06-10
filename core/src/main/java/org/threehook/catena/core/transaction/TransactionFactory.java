@@ -1,6 +1,9 @@
 package org.threehook.catena.core.transaction;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import org.threehook.catena.core.BlockchainException;
+import org.threehook.catena.core.BlockchainFactory;
 import org.threehook.catena.core.UTXOSet;
 import org.threehook.catena.core.util.ByteUtils;
 import org.threehook.catena.core.wallet.Wallet;
@@ -15,17 +18,21 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Component
 public class TransactionFactory {
 
     private final static int SUBSIDY = 10;
 
+    @Autowired
+    private BlockchainFactory blockchainFactory;
+
     // Creates a new coinbase transaction
-    public static Transaction createCoinBaseTransaction(String to, String data) {
+    public Transaction createCoinBaseTransaction(String to, String data) {
         if (data == null || data.equals("")) {
             byte[] randData = RandomUtils.nextBytes(20);
             data = Hex.toHexString(randData);
         }
-        TransactionInput[] txin = {new TransactionInput(new byte[]{}, -1, new byte[]{}, ByteUtils.stringToBytes(data))};
+        TransactionInput[] txin = {new TransactionInput(new byte[0], -1, new byte[0], ByteUtils.stringToBytes(data))};
         TransactionOutput[] txout = {new TransactionOutput(SUBSIDY, to)};
         Transaction tx = new Transaction(null,  txin, txout);
         tx.setId(tx.hash());
@@ -33,7 +40,7 @@ public class TransactionFactory {
     }
 
     // Creates a new transaction
-    public static Transaction createUTXOTransaction(Wallet wallet, String to, int amount, UTXOSet utxoSet) {
+    public Transaction createUTXOTransaction(Wallet wallet, String to, int amount, UTXOSet utxoSet) {
         List<TransactionInput> txInputs = new ArrayList<>();
         List<TransactionOutput> txOutputs = new ArrayList<>();
         byte[] pubKeyHash = wallet.hashPublicKey(wallet.getPublicKey());
@@ -70,7 +77,9 @@ public class TransactionFactory {
         } catch (InvalidKeyException ike) {
             throw new BlockchainException(ike.getMessage());
         }
+        //TODO: Get blockchain from BlockchainFactory instead of UTXOSet
         utxoSet.getBlockchain().signTransaction(tx, privateKey);
+        blockchainFactory.getBlockchain().signTransaction(tx, privateKey);
 
         return tx;
     }

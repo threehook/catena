@@ -1,66 +1,64 @@
 package org.threehook.catena.networking;
 
+import io.scalecube.services.Microservices;
+import io.scalecube.transport.Message;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.threehook.catena.networking.cluster.ClusterNetwork;
-import org.threehook.catena.networking.config.SeedAddress;
-import org.threehook.catena.networking.messages.Message;
-import org.threehook.catena.networking.messaging.MessageHandlerRegister;
-import org.threehook.catena.networking.messaging.MessageHandler;
-import org.threehook.catena.networking.messaging.dispatchers.VersionMessageProducer;
+import org.threehook.catena.networking.messaging.gossips.RequestBestHeight;
+import org.threehook.catena.networking.messaging.listening.BestHeightListener;
+import org.threehook.catena.networking.messaging.listening.BestHeightRequestListener;
 import org.threehook.catena.networking.serverthread.ServerThread;
 import org.threehook.catena.networking.serverthread.ShutdownThread;
-
-import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 @Component
 public class Server {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(Server.class);
+
+    @Value("${node.version}")
+    private int nodeVersion;
     @Value("${node.server.address}")
     private String nodeServerAddress;
     @Value("${node.server.port}")
     private int nodeServerPort;
+    @Value("${node.service.port}")
+    private int nodeServicePort;
+
 
     @Autowired
-    private MessageHandlerRegister device;
+    @Qualifier("consumer")
+    private Microservices consumer;
     @Autowired
-    private VersionMessageProducer versionMessageProducer;
+    private BestHeightRequestListener bestHeightRequestListener;
+
     @Autowired
-    private ClusterNetwork clusterNetwork;
-    @Autowired
-    private List<SeedAddress> seedAddresses;
+    private BestHeightListener bestHeightListener;
 
     private String nodeAddress;
     private String miningAddress;
 
+
+
     public void startServer(String minerAddress) {
         this.miningAddress = minerAddress; //???
+        // Listen to BestHeightRequest messages
+        bestHeightRequestListener.subscribe();
+        // Listen to BestHeightResponse messages
+        bestHeightListener.subscribe();
 
-        // TODO: How to select a seedAddress from many?
-        SeedAddress seedAddress = seedAddresses.get(0);
-        String targetAddress = seedAddress.getHost() + ":" + seedAddress.getPort();
-        versionMessageProducer.produceAndSendMessage(targetAddress);
-
-        // Listen for messages
-        final ExecutorService executorService = Executors.newCachedThreadPool();
-        clusterNetwork.getCluster().listen().filter(message-> {
-            return message.data() instanceof Message;
-        }).subscribe(message-> {
-            Message catenaMessage = message.data();
-            executorService.execute(new Runnable() {
-                public void run() {
-                    MessageHandler messageHandler = device.getHandler(catenaMessage.getTypeClass());
-                    messageHandler.handle(catenaMessage);
-                }
-            });
-        });
+        consumer.cluster().spreadGossip(Message.builder()
+                .header("requestorHost", nodeServerAddress)
+                .header("requestorPort", String.valueOf(nodeServicePort))
+                .data(new RequestBestHeight()).build());
 
         ServerThread serverThread = new ServerThread();
-        Runtime.getRuntime().addShutdownHook(new ShutdownThread(executorService, serverThread));
-        System.out.println("Catena server started on " + nodeServerAddress + ":" + nodeServerPort + ".\nPress Ctrl-C to stop. Running threads will be cleanly finished.\n");
+        Runtime.getRuntime().addShutdownHook(new ShutdownThread(serverThread));
+        LOGGER.info("Catena server (Version " + nodeVersion + ") started on " + nodeServerAddress + ":" + nodeServerPort + ".\nPress Ctrl-C to stop. Running threads will be cleanly finished.\n");
     }
 
 }
+

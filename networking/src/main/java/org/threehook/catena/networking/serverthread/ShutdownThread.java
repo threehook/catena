@@ -1,33 +1,35 @@
 package org.threehook.catena.networking.serverthread;
 
+import io.scalecube.cluster.Member;
+import io.scalecube.services.Microservices;
+import io.scalecube.services.ServiceEndpoint;
+import io.scalecube.services.registry.api.ServiceRegistry;
+import io.scalecube.transport.Message;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 public class ShutdownThread extends Thread {
 
-    private ExecutorService executorService;
+    private static final Logger LOGGER = LoggerFactory.getLogger(ShutdownThread.class);
+
     private ServerThread serverThread;
 
-    public ShutdownThread(ExecutorService executorService, ServerThread shutdown) {
+    public ShutdownThread(ServerThread shutdown) {
         super();
-        this.executorService = executorService;
         this.serverThread = shutdown;
     }
 
     public void run() {
-        // Initiates an orderly shutdown in which previously submitted tasks are executed, but no new tasks will be accepted
-        executorService.shutdown();
-        try {
-            while(!executorService.awaitTermination(10, TimeUnit.MINUTES)) {
-                System.out.printf("%s\r", "Shutting down...");
-            }
-        } catch (InterruptedException ie) {
-            // No action
-        }
-
         // And shutdown server thread
         serverThread.stopThread();
-        System.out.println("Shutdown complete.");
+        LOGGER.info("Shutdown complete.");
     }
 
 }

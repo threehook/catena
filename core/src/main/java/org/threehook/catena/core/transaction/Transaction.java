@@ -71,7 +71,7 @@ public class Transaction implements Serializable {
 
     // Returns the hash of the Transaction
     public byte[] hash() {
-        setId(new byte[]{});
+        setId(new byte[0]);
         return HashUtils.checksum256(this.serialize());
     }
 

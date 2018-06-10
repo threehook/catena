@@ -3,10 +3,19 @@
 
     <property name="LOG_HOME" value="${USERPROFILE}/.catena/logs" />
 
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%msg%n</pattern>
+        </encoder>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>DEBUG</level>
+        </filter>
+    </appender>
+
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${LOG_HOME}/catena.log</file>
         <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
-            <Pattern>%d{yyyy-MM-dd HH:mm:ss} - %msg%n</Pattern>
+            <Pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{5} - %msg%n</Pattern>
         </encoder>
 
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
@@ -18,11 +27,17 @@
 
     </appender>
 
-    <logger name="org.threehook.catena" level="debug" additivity="false">
+    <logger name="org.threehook.catena" level="DEBUG" additivity="false">
+        <appender-ref ref="STDOUT" />
         <appender-ref ref="FILE" />
     </logger>
 
-    <root level="error">
+    <logger name="io.scalecube.services" level="INFO" />
+    <logger name="io.scalecube.cluster" level="INFO" />
+    <!--<logger name="io.rsocket" level="OFF" />-->
+    <!--<logger name="reactor.ipc.netty.channel" level="OFF" />-->
+
+    <root level="ERROR">
         <appender-ref ref="FILE" />
     </root>
 

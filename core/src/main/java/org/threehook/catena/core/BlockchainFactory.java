@@ -21,17 +21,19 @@ public class BlockchainFactory {
     private BlocksDbSession blocksDbSession;
     @Autowired
     private Blockchain blockchain;
+    @Autowired
+    private TransactionFactory transactionFactory;
 
     // Creates a new blockchain DB
-    public Blockchain createBlockchain(String address) {
+    public void createBlockchain(String address) {
         if (blocksDbSession.dbExists()) {
             System.out.println("Blockchain already exists.");
             System.exit(1);
         }
 
-        Transaction cbtx = TransactionFactory.createCoinBaseTransaction(address, genesisCoinbaseData);
+        Transaction cbtx = transactionFactory.createCoinBaseTransaction(address, genesisCoinbaseData);
 
-        Block genesis = new Block(Collections.singletonList(cbtx), new byte[]{}, 0);
+        Block genesis = new Block(Collections.singletonList(cbtx), new byte[0], 0);
         DB db =  blocksDbSession.getLevelDb();
         db.put(genesis.getHash(), genesis.serialize());
         db.put(ByteUtils.stringToBytes("l"), genesis.getHash());
@@ -40,7 +42,6 @@ public class BlockchainFactory {
         System.out.println("Genesis nonce: " + genesis.getNonce());
 
         blockchain.setTip(genesis.getHash());
-        return blockchain;
     }
 
     // Gets the Blockchain by retrieving the last block (the tip) from the database
@@ -50,7 +51,7 @@ public class BlockchainFactory {
             System.exit(1);
         }
         DB db = blocksDbSession.getLevelDb();
-        blockchain.setTip(db.get(ByteUtils.stringToBytes("l")));;
+        blockchain.setTip(db.get(ByteUtils.stringToBytes("l")));
         return blockchain;
     }
 
